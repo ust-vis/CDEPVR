@@ -17,7 +17,7 @@ public class ComputeShaderDispatch : MonoBehaviour
         rt.Create();
         plane.GetComponent<Renderer>().material.mainTexture = rt;  
         shader.SetTexture(0, "Result", rt);
-
+        shader.Dispatch(0, rt.width, rt.height, 1);
     }
 
     // Update is called once per frame

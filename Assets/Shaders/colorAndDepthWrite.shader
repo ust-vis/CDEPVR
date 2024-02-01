@@ -1,8 +1,9 @@
-Shader "Unlit/Test1"
+Shader "Unlit/colorAndDepthWrite"
 {
     Properties
     {
         _MainTex ("Texture", 2D) = "white" {}
+        _Depth ("Texture", 2D) = "white" {}
         _Scale ("Scale", float) = 1.0
     }
     SubShader
@@ -37,6 +38,7 @@ Shader "Unlit/Test1"
             };
 
             sampler2D _MainTex;
+            sampler2D _Depth;
             float4 _MainTex_ST;
             float _Scale;
 
@@ -49,11 +51,29 @@ Shader "Unlit/Test1"
                 return o;
             }
 
-            fixed4 frag (v2f i) : SV_Target
+            struct ForwardFragmentOutput
             {
-                // sample the texture
-                fixed4 col = tex2D(_MainTex, i.uv);
-                return col;
+                float4 Color : SV_Target;
+                float  Depth : SV_Depth;
+            };
+
+            float LinearDepthToRawDepth(float linearDepth)
+            {
+                return (1.0f - (linearDepth * _ZBufferParams.y)) / (linearDepth * _ZBufferParams.x);
+            }
+
+            ForwardFragmentOutput frag(v2f i)
+            {
+                ForwardFragmentOutput output;
+                float far = 10;
+                float near = 0;
+
+                output.Color = tex2D(_MainTex, i.uv);
+                //output.Depth = tex2D(_Depth, i.uv);
+                output.Depth = LinearDepthToRawDepth(tex2D(_Depth, i.uv)).r;
+                //output.Color = output.Depth;
+
+                return output;
             }
             ENDCG
         }

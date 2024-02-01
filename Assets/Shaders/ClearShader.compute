@@ -1,0 +1,13 @@
+#pragma kernel CLEAR
+
+uint2 dims;
+
+RWStructuredBuffer<uint> out_rgbd;
+
+[numthreads(8, 8, 1)]
+void CLEAR(uint3 id : SV_DispatchThreadID) {
+    if (id.x < dims.x && id.y < dims.y) {
+        uint pix_idx = (id.y * dims.x) + id.x;
+        out_rgbd[pix_idx] = 0xFFF00000;
+    }
+}

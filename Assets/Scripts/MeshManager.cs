@@ -4,17 +4,15 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEngine;
+using cdep;
 
 public class MeshManager : MonoBehaviour
 {
     public bool cdep = true;
     public Camera cam;
-    public float eye;
     public bool drivePosFromCam = true;
-    public Vector3 offset = Vector3.zero;
     public Vector3 cdepCameraPosition = Vector3.zero;
     public Vector3 cdepCameraDirection = Vector3.zero;
-    public int meshesToLoad = 8;
     public int maxMeshes = 8;
     public Texture2D[] images;
     public Texture2D[] depths;
@@ -34,7 +32,7 @@ public class MeshManager : MonoBehaviour
             Debug.LogError("expected parrallel arrays but one length differed");
         }
         MeshGeneration meshGenScript;
-        for (int i = 0; i < images.Length && i < meshesToLoad; i++)
+        for (int i = 0; i < images.Length && i < maxMeshes; i++)
         {
             InitializeOdsTextures(Application.streamingAssetsPath + "/" + depthName, i);
             Texture2D image = images[i];
@@ -45,7 +43,6 @@ public class MeshManager : MonoBehaviour
                 meshGenScript = Instantiate(meshTemplate, new Vector3(0,0,0), Quaternion.Euler(-180, 0, 0)).GetComponent<MeshGeneration>();
                 float[] position = { positions[i].x, positions[i].y, positions[i].z};
                 meshGenScript.pos = position;
-                ((CDEPMeshGeneration)meshGenScript).SetCamEye(eye);
             }
             else {
                 float[] position = { positions[i].z, positions[i].y, -positions[i].x };
@@ -65,7 +62,7 @@ public class MeshManager : MonoBehaviour
         if (cdep) {
             if (drivePosFromCam)
             {
-                cdepCameraPosition = new Vector3(Camera.main.transform.position.z, Camera.main.transform.position.y, Camera.main.transform.position.x) + offset;
+                cdepCameraPosition = new Vector3(Camera.main.transform.position.z, Camera.main.transform.position.y, Camera.main.transform.position.x);
 
                 float cameraPitch = -Camera.main.transform.rotation.eulerAngles.x;
                 float cameraYaw = -Camera.main.transform.rotation.eulerAngles.y;
@@ -84,7 +81,6 @@ public class MeshManager : MonoBehaviour
             for (int i = 0; i < captures.Count; i++)
             {
                 CDEPMeshGeneration meshGen = ((CDEPMeshGeneration)captures[i].meshGenScript);
-                
                 if (i < maxMeshes)
                 {
                     if(aspect != Camera.main.aspect)
@@ -148,10 +144,3 @@ public class MeshManager : MonoBehaviour
 
 }
 
-public class Capture
-{
-    public Texture2D image;
-    public Texture2D depth;
-    public Vector3 position;
-    public MeshGeneration meshGenScript;
-}

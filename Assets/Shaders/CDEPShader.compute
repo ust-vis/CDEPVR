@@ -1,0 +1,182 @@
+#pragma kernel CDEP
+
+#define M_PI 3.1415926535897932384626433832795
+#define EPSILON 0.000001
+
+
+float3 camera_position;
+float camera_ipd;
+float camera_focal_dist;
+float z_max;
+float depth_hint;
+uint use_xr;
+float xr_fovy;
+float xr_aspect;
+float3 xr_view_dir;
+bool renderLeftEye;
+bool renderRightEye;
+uint xres;
+uint yres;
+
+Texture2D<float4> image;
+Texture2D<float4> depths;
+RWStructuredBuffer<uint> out_rgbd;
+
+
+float fmod(float num, float div) {
+    return num - div * floor(num / div);
+}
+
+uint packRgb776d12(float3 rgb, float depth) {
+    uint r7 = uint(rgb.r * 127.0);
+    uint g7 = uint(rgb.g * 127.0);
+    uint b6 = uint(rgb.b * 63.0);
+    uint d12 = uint(depth * 4095.0);
+    return ((d12 & 0xFFF) << 20) | ((b6 & 0x3F) << 14) | ((g7 & 0x7F) << 7) | (r7 & 0x7F);
+}
+
+float sphericalPixelSize(float inclination, float dims_y) {
+    float latitude = inclination - (0.5 * M_PI);
+    float delta_lat = 0.5 * M_PI / dims_y;
+    float lat1 = latitude - delta_lat;
+    float lat2 = latitude + delta_lat;
+    return sin(lat2) - sin(lat1);
+}
+
+
+[numthreads(8, 8, 1)]
+void CDEP(uint3 global_id : SV_DispatchThreadID) {
+    if (global_id.x < xres && global_id.y < yres) {
+        // Calculate projected point position (relative to original projection sphere center)
+        float norm_x = (float(global_id.x) + 0.5) / float(xres);
+        float norm_y = (float(global_id.y) + 0.5) / float(yres);
+        float in_azimuth = 2.0 * M_PI * (1.0 - norm_x);
+        float in_inclination = M_PI * norm_y;
+        float in_depth = depths[uint2(xres - global_id.x, global_id.y)].r;
+        float3 pt = float3(in_depth * cos(in_azimuth) * sin(in_inclination),
+                            in_depth * sin(in_azimuth) * sin(in_inclination),
+                            in_depth * cos(in_inclination));
+        
+        // Backproject to new ODS projection sphere
+        // 1) calculate azimuth/inclination to center of projection sphere
+        float3 camera_spherical = camera_position.zxy;
+        float3 vertex_direction = pt - camera_spherical;
+        float magnitude = length(vertex_direction);
+        float center_azimuth = (abs(vertex_direction.x) < EPSILON && abs(vertex_direction.y) < EPSILON) ?
+                            (1.0 - 0.5 * sign(vertex_direction.z)) * M_PI :
+                            atan2(vertex_direction.y, vertex_direction.x);
+        float center_inclination = acos(vertex_direction.z / magnitude);
+
+        // 2) calculate stereo camera location
+        float camera_radius = 0.5 * camera_ipd * cos(center_inclination - (M_PI / 2.0));
+        float camera_azimuth_l = center_azimuth + acos(camera_radius / magnitude); // left:  +
+        float camera_azimuth_r = center_azimuth - acos(camera_radius / magnitude); // right: -
+        float3 camera_pt_l = float3(camera_radius * cos(camera_azimuth_l),
+                                    camera_radius * sin(camera_azimuth_l),
+                                    0.0);
+        float3 camera_pt_r = float3(camera_radius * cos(camera_azimuth_r),
+                                    camera_radius * sin(camera_azimuth_r),
+                                    0.0);
+
+        // 3) project point onto projection sphere
+        float proj_sphere_dist = sqrt(camera_focal_dist * camera_focal_dist - camera_radius * camera_radius);
+        float3 camera_to_pt_l = vertex_direction - camera_pt_l;
+        float camera_distance_l = length(camera_to_pt_l);
+        float3 camera_ray_l = camera_to_pt_l / camera_distance_l;
+        float3 proj_sphere_pt_l = camera_pt_l + proj_sphere_dist * camera_ray_l;
+        float3 camera_to_pt_r = vertex_direction - camera_pt_r;
+        float camera_distance_r = length(camera_to_pt_r);
+        float3 camera_ray_r = camera_to_pt_r / camera_distance_r;
+        float3 proj_sphere_pt_r = camera_pt_r + proj_sphere_dist * camera_ray_r;
+
+        // 4) convert projected point to spherical coords
+        float out_azimuth_l = (abs(proj_sphere_pt_l.x) < EPSILON && abs(proj_sphere_pt_l.y) < EPSILON) ? 
+                            (1.0 - 0.5 * sign(proj_sphere_pt_l.z)) * M_PI : 
+                            fmod(atan2(proj_sphere_pt_l.y, proj_sphere_pt_l.x), (2.0 * M_PI ));
+        float out_inclination_l = acos(proj_sphere_pt_l.z / camera_focal_dist);
+        float out_azimuth_r = (abs(proj_sphere_pt_r.x) < EPSILON && abs(proj_sphere_pt_r.y) < EPSILON) ? 
+                            (1.0 - 0.5 * sign(proj_sphere_pt_r.z)) * M_PI : 
+                            fmod(atan2(proj_sphere_pt_r.y, proj_sphere_pt_r.x), (2.0 * M_PI ));
+        float out_inclination_r = acos(proj_sphere_pt_r.z / camera_focal_dist);
+
+        // Check if point is visible (XR only)
+        bool visible_l = true;
+        bool visible_r = true;
+        if (use_xr != 0) {
+            float diag_aspect = sqrt(xr_aspect * xr_aspect + 1.0);
+            float vertical_fov = 0.5 * xr_fovy + 0.005;
+            float diagonal_fov = atan(tan(vertical_fov) * diag_aspect);
+            float3 point_dir_l = normalize(proj_sphere_pt_l.yzx);
+            visible_l = dot(point_dir_l, xr_view_dir) >= cos(diagonal_fov);
+            float3 point_dir_r = normalize(proj_sphere_pt_r.yzx);
+            visible_r = dot(point_dir_r, xr_view_dir) >= cos(diagonal_fov);
+        }
+
+        // Write pixel and depth to output textures
+        float4 color = image[global_id.xy];
+        float dims_y = float(yres);
+        float in_area = sphericalPixelSize(in_inclination, dims_y);
+
+        if (visible_l && renderLeftEye) {
+            // pixel position
+            uint out_x_l = uint(round(float(xres) * ((2.0 * M_PI) - out_azimuth_l) / (2.0 * M_PI)));
+            uint out_y_l = uint(round(float(yres) * (out_inclination_l / M_PI)));
+
+            // pack RGB-D into uint32
+            float dist_norm_l = (camera_distance_l + depth_hint) / z_max;
+            uint rgbd_l = packRgb776d12(color.rgb, dist_norm_l);
+
+            // size of point (potentially multiple pixels)
+            float sphere_area_ratio_l = in_area / sphericalPixelSize(out_inclination_l, dims_y);
+            float distance_ratio_l = in_depth / camera_distance_l;
+            float size_ratio_l = round(clamp(sphere_area_ratio_l * distance_ratio_l, 1.0, 7.0));
+
+            // write RGB-D data to output buffer
+            int px_start_l = int(floor(0.5 * size_ratio_l));
+            int px_end_l = int(ceil(0.5 * size_ratio_l));
+            for (int j = -px_start_l; j < px_end_l; j++) {
+                int f_y = int(out_y_l) + j;
+                if (f_y >= 0 && f_y < int(yres)) {
+                    for (int i = -px_start_l; i <= px_end_l; i++) {
+                        int f_x = int(out_x_l) + i;
+                        if (f_x >= 0 && f_x < int(xres)) {
+                            uint pix_idx_l = uint(f_y) * xres  + uint(f_x);
+                            InterlockedMin(out_rgbd[pix_idx_l], rgbd_l);
+                        }
+                    }
+                }
+            }
+        }
+
+        if (visible_r && renderRightEye) {
+            // pixel position
+            uint out_x_r = uint(round(float(xres) * ((2.0 * M_PI) - out_azimuth_r) / (2.0 * M_PI)));
+            uint out_y_r = uint(round(float(yres) * (out_inclination_r / M_PI))) + yres;
+
+            // pack RGB-D into uint32
+            float dist_norm_r = (camera_distance_r + depth_hint) / z_max;
+            uint rgbd_r = packRgb776d12(color.rgb, dist_norm_r);
+
+            // size of point (potentially multiple pixels)
+            float sphere_area_ratio_r = in_area / sphericalPixelSize(out_inclination_r, dims_y);
+            float distance_ratio_r = in_depth / camera_distance_r;
+            float size_ratio_r = round(clamp(sphere_area_ratio_r * distance_ratio_r, 1.0, 7.0));
+
+            // write RGB-D data to output buffer
+            int px_start_r = int(floor(0.5 * size_ratio_r));
+            int px_end_r = int(ceil(0.5 * size_ratio_r));
+            for (int j = -px_start_r; j < px_end_r; j++) {
+                int f_y = int(out_y_r) + j;
+                if (f_y >= int(yres) && f_y < 2 * int(yres)) {
+                    for (int i = -px_start_r; i <= px_end_r; i++) {
+                        int f_x = int(out_x_r) + i;
+                        if (f_x >= 0 && f_x < int(xres)) {
+                            uint pix_idx_r = uint(f_y) * xres  + uint(f_x);
+                            InterlockedMin(out_rgbd[pix_idx_r], rgbd_r);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

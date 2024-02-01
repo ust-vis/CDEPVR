@@ -13,12 +13,12 @@ public class MeshGeneration : MonoBehaviour
     public float[] pos;
     public int densityMultiplier = 1;
 
-    protected Renderer renderer;
+    protected Renderer meshRenderer;
     protected Mesh mesh;
 
     public void Awake()
     {
-        renderer = GetComponent<Renderer>();
+        meshRenderer = GetComponent<Renderer>();
     }
 
     public virtual void Setup()
@@ -53,8 +53,8 @@ public class MeshGeneration : MonoBehaviour
         mesh.bounds = bounds;
 
         GetComponent<MeshFilter>().mesh = mesh;
-        renderer.material.SetTexture("_MainTex", image);
-        renderer.material.SetTexture("_Depth", depth);
+        meshRenderer.material.SetTexture("_MainTex", image);
+        meshRenderer.material.SetTexture("_Depth", depth);
     }
 
 }

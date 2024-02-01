@@ -1,0 +1,28 @@
+#pragma kernel RENDERTEXTURE
+
+uint2 dims;
+float z_max;
+
+RWStructuredBuffer<uint> _Rgbd;
+RWTexture2D<float4> _OutRgba;
+RWTexture2D<float> _OutDepth;
+
+float4 unpackColorRgb776d12(uint rgb776d12) {
+    return float4((rgb776d12 & 0x7F) / 128.0, ((rgb776d12 >> 7) & 0x7F) / 128.0, ((rgb776d12 >> 14) & 0x3F) / 64.0, 1.0);
+}
+
+float unpackDepthRgb776d12(uint rgb776d12) {
+    return z_max * (rgb776d12 >> 20) / 4095.0;
+}
+
+[numthreads(8, 8, 1)]
+void RENDERTEXTURE(uint3 id : SV_DispatchThreadID) {
+    if (id.x < dims.x && id.y < dims.y) {
+        uint pix_idx = (dims.y - id.y - 1) * dims.x  + id.x;
+        float4 rgba = unpackColorRgb776d12(_Rgbd[pix_idx]);
+        float depth = unpackDepthRgb776d12(_Rgbd[pix_idx]);
+        _OutRgba[id.xy] = rgba;
+        _OutDepth[id.xy] = depth;
+    }
+}
+
