@@ -13,6 +13,7 @@ Shader "Unlit/colorAndDepthWrite"
 
         Pass
         {
+            ZWrite On
             Cull Off
             Lighting Off
 
@@ -72,6 +73,7 @@ Shader "Unlit/colorAndDepthWrite"
                 //output.Depth = tex2D(_Depth, i.uv);
                 output.Depth = LinearDepthToRawDepth(tex2D(_Depth, i.uv)).r;
                 //output.Color = output.Depth;
+                //output.Color = tex2D(_Depth, i.uv).rrrr;
 
                 return output;
             }

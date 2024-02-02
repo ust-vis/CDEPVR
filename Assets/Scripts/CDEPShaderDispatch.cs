@@ -96,8 +96,8 @@ public class CDEPShaderDispatch : MonoBehaviour
 
         if (captures.Count > 0)
         {
-            cdepShader.SetInt("xres", (int)captures[0].image.Size().x);
-            cdepShader.SetInt("yres", (int)captures[0].image.Size().y);
+            cdepShader.SetInt("xres", (int)captures[0].image.width);
+            cdepShader.SetInt("yres", (int)captures[0].image.height);
         }
 
         cdepShader.SetBuffer(cdepKernelID, "out_rgbd", intermediateStorage);
