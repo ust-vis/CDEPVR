@@ -14,6 +14,6 @@ public class XRDisplayScript : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-            XRSettings.gameViewRenderMode = GameViewRenderMode.BothEyes;
+            //XRSettings.gameViewRenderMode = GameViewRenderMode.BothEyes;
     }
 }

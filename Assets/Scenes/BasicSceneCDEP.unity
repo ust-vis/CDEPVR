@@ -542,11 +542,15 @@ PrefabInstance:
     - target: {fileID: 5391275218183831016, guid: e7424ce134a1a4d46acfb0fe5ccf4157, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
-      objectReference: {fileID: 2100000, guid: eea63d043055b924ebfdfd34f63fcdf0, type: 2}
+      objectReference: {fileID: 2100000, guid: 4e1d29ebebd32d6489cf191ed7a70f47, type: 2}
     - target: {fileID: 5895586085963635773, guid: e7424ce134a1a4d46acfb0fe5ccf4157, type: 3}
       propertyPath: m_Layer
       value: 8
       objectReference: {fileID: 0}
+    - target: {fileID: 6705927596486456043, guid: e7424ce134a1a4d46acfb0fe5ccf4157, type: 3}
+      propertyPath: m_TargetTexture
+      value: 
+      objectReference: {fileID: 8400000, guid: 20c1d4e717579964d87e58f002178356, type: 2}
     - target: {fileID: 6705927596486456043, guid: e7424ce134a1a4d46acfb0fe5ccf4157, type: 3}
       propertyPath: m_CullingMask.m_Bits
       value: 128
@@ -639,7 +643,7 @@ PrefabInstance:
     - target: {fileID: 5391275218183831016, guid: e7424ce134a1a4d46acfb0fe5ccf4157, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
-      objectReference: {fileID: 2100000, guid: 08f900f058f6ebe41b99c048002575f7, type: 2}
+      objectReference: {fileID: 2100000, guid: 9b2e751cb62eca94d8ef412b8d9e2ea1, type: 2}
     - target: {fileID: 5895586085963635773, guid: e7424ce134a1a4d46acfb0fe5ccf4157, type: 3}
       propertyPath: m_Layer
       value: 6

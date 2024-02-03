@@ -9,6 +9,8 @@ Material:
   m_PrefabAsset: {fileID: 0}
   m_Name: Unlit_colorAndDepthWrite
   m_Shader: {fileID: 4800000, guid: 4dbb856429aae62498fec5e3acf8a0fe, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
   m_InvalidKeywords: []
   m_LightmapFlags: 4
@@ -17,6 +19,7 @@ Material:
   m_CustomRenderQueue: -1
   stringTagMap: {}
   disabledShaderPasses: []
+  m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
@@ -25,7 +28,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 8400000, guid: b2450255cfe2ebc40a5edf26f73f0fca, type: 2}
+        m_Texture: {fileID: 8400000, guid: 20c1d4e717579964d87e58f002178356, type: 2}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 1}
     m_Ints: []

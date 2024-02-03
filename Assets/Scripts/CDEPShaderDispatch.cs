@@ -79,7 +79,8 @@ public class CDEPShaderDispatch : MonoBehaviour
         textureGenShader.SetInts("dims", x, y);
         textureGenShader.SetFloat("z_max", 1);
 
-        cdepShader.SetFloat("camera_ipd", 0.065f);
+        cdepShader.SetFloat("camera_ipd", 0.0608f);
+        Debug.Log(Camera.main.stereoSeparation);
         cdepShader.SetFloat("camera_focal_dist", 1f);
         cdepShader.SetFloat("z_max", 10f);
         cdepShader.SetFloat("depth_hint", 1f);

@@ -3,7 +3,7 @@ Shader "Unlit/colorAndDepthWrite"
     Properties
     {
         _MainTex ("Texture", 2D) = "white" {}
-        _Depth ("Texture", 2D) = "white" {}
+        _Depth ("Depth", 2D) = "white" {}
         _Scale ("Scale", float) = 1.0
     }
     SubShader
