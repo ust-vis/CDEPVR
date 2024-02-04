@@ -4,7 +4,7 @@ Shader "Unlit/CDEP" {
         _img_index ("image index", Float) = 0.0
         //_capture_position ("capture positon", Vector) = (0, 0, 0, 1)
         _camera_position ("camera positon", Vector) = (0, 0, 0, 1)
-        _camera_ipd ("ipd", Float) = 0.065
+        _camera_ipd ("ipd", Float) = 0.0608
         _camera_focal_dist ("focal distance", Float) = 1.95
         _camera_eye ("camera eye", Float) = -1.0
         _xr_fovy ("fov y", Float) = 75
@@ -45,6 +45,7 @@ Shader "Unlit/CDEP" {
                 float2 uv : TEXCOORD0;
                 uint vertexId : ID;
                 float size: PSIZE;
+                float depth: myDepth;
             };
 
             sampler2D _MainTex;
@@ -141,14 +142,14 @@ Shader "Unlit/CDEP" {
                 float depth_hint = -0.015 * _img_index; // favor image with lower index when depth's match (index should be based on dist)
                 //float depth_hint = -0.015;
                 o.vertex = float4(projected_azimuth - M_PI, projected_inclination - M_PI/2, -camera_distance - depth_hint, 1.0);
-
-                o.vertex = UnityObjectToClipPos(o.vertex);
+                o.vertex = UnityObjectToClipPos(o.vertex);                    
+                o.depth = o.vertex.z;
 
                 return o;
             }
 
             fixed4 frag(v2f i) : SV_Target {
-                return tex2D(_MainTex, i.uv);
+                return float4(tex2D(_MainTex, i.uv).rgb, i.depth);
             }
             ENDCG
         }

@@ -14,6 +14,7 @@ Shader "Unlit/Test1"
         {
             Cull Off
             Lighting Off
+            ZWrite On
 
 
             CGPROGRAM
@@ -36,6 +37,11 @@ Shader "Unlit/Test1"
                 float4 vertex : SV_POSITION;
             };
 
+            struct output{
+                float4 col: SV_Target;
+                float depth: SV_Depth;
+            };
+
             sampler2D _MainTex;
             float4 _MainTex_ST;
             float _Scale;
@@ -49,11 +55,20 @@ Shader "Unlit/Test1"
                 return o;
             }
 
-            fixed4 frag (v2f i) : SV_Target
+            float LinearDepthToRawDepth(float linearDepth)
+            {
+                return (1.0f - (linearDepth * _ZBufferParams.y)) / (linearDepth * _ZBufferParams.x);
+            }
+
+            output frag(v2f i)
             {
                 // sample the texture
-                fixed4 col = tex2D(_MainTex, i.uv);
-                return col;
+                output o;
+                float4 data = tex2D(_MainTex, i.uv);
+                o.col = data;
+                o.depth = LinearDepthToRawDepth(1-data.w);
+                //o.col = o.depth;
+                return o;
             }
             ENDCG
         }

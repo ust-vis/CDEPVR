@@ -7,9 +7,9 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: texMat
+  m_Name: texMat Variant 1
   m_Shader: {fileID: 4800000, guid: ab1fcd96a92d7da44a39ef524b4c31ae, type: 3}
-  m_Parent: {fileID: 0}
+  m_Parent: {fileID: 2100000, guid: cfe0b2c1114fa734c83a025bd23b2421, type: 2}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
   m_InvalidKeywords: []
@@ -24,11 +24,10 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: b76a3965181f3554b90ebfb026a1a63f, type: 3}
+        m_Texture: {fileID: 8400000, guid: 20c1d4e717579964d87e58f002178356, type: 2}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Ints: []
-    m_Floats:
-    - _Scale: 1
+    m_Floats: []
     m_Colors: []
   m_BuildTextureStacks: []
