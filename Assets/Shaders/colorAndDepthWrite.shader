@@ -35,6 +35,7 @@ Shader "Unlit/colorAndDepthWrite"
             struct v2f
             {
                 float2 uv : TEXCOORD0;
+                float4 position: POS;
                 float4 vertex : SV_POSITION;
             };
 
@@ -46,6 +47,7 @@ Shader "Unlit/colorAndDepthWrite"
             v2f vert (appdata v)
             {
                 v2f o;
+                o.position = v.vertex;
                 o.vertex = UnityObjectToClipPos(v.vertex);
                 o.uv = TRANSFORM_TEX(v.uv, _MainTex);
                 o.uv.y *= _Scale;
@@ -67,13 +69,21 @@ Shader "Unlit/colorAndDepthWrite"
             {
                 ForwardFragmentOutput output;
                 float far = 10;
-                float near = 0;
+                float near = 0.1;
 
-                output.Color = tex2D(_MainTex, i.uv);
-                //output.Depth = tex2D(_Depth, i.uv);
-                output.Depth = LinearDepthToRawDepth(tex2D(_Depth, i.uv)).r;
-                //output.Color = output.Depth;
-                //output.Color = tex2D(_Depth, i.uv).rrrr;
+                //convert distance to depth
+                float objectDistance = tex2D(_Depth, i.uv).r;
+                float4 position = i.position;
+                float4 fragPos = objectDistance * position;
+                float4 fragClipPosition = UnityObjectToClipPos(fragPos);
+                float fragDepth = fragClipPosition.z;
+                fragDepth = (((far - near) * fragDepth) + far + near) * 0.5;
+
+                //output.Color = tex2D(_MainTex, i.uv);
+                //output.Depth = fragDepth;
+                output.Depth = LinearDepthToRawDepth(fragDepth);
+                output.Color = output.Depth.rrrr;
+                
 
                 return output;
             }
