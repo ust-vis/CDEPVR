@@ -19,6 +19,8 @@ Shader "Unlit/colorAndDepthWrite"
 
 
             CGPROGRAM
+// Upgrade NOTE: excluded shader from DX11; has structs without semantics (struct v2f members position)
+#pragma exclude_renderers d3d11
             #pragma vertex vert
             #pragma fragment frag
             // make fog work
@@ -35,7 +37,7 @@ Shader "Unlit/colorAndDepthWrite"
             struct v2f
             {
                 float2 uv : TEXCOORD0;
-                float4 position: POS;
+                float4 position: TEXCOORD1;
                 float4 vertex : SV_POSITION;
             };
 
@@ -62,29 +64,34 @@ Shader "Unlit/colorAndDepthWrite"
 
             float LinearDepthToRawDepth(float linearDepth)
             {
-                return (1.0f - (linearDepth * _ZBufferParams.y)) / (linearDepth * _ZBufferParams.x);
+                return (1.0 - (linearDepth * _ZBufferParams.y)) / (linearDepth * _ZBufferParams.x);
             }
 
             ForwardFragmentOutput frag(v2f i)
             {
                 ForwardFragmentOutput output;
-                float far = 10;
-                float near = 0.1;
 
                 //convert distance to depth
                 float objectDistance = tex2D(_Depth, i.uv).r;
                 float4 position = i.position;
                 float4 fragPos = objectDistance * position;
                 float4 fragClipPosition = UnityObjectToClipPos(fragPos);
-                float fragDepth = fragClipPosition.z;
-                fragDepth = (((far - near) * fragDepth) + far + near) * 0.5;
+                float fragDepth = (fragClipPosition.z / fragClipPosition.w);
+                
+                //fragDepth = (fragDepth - _ProjectionParams.y) / (_ProjectionParams.z - _ProjectionParams.y);
 
                 //output.Color = tex2D(_MainTex, i.uv);
                 //output.Depth = fragDepth;
-                output.Depth = LinearDepthToRawDepth(fragDepth);
-                output.Color = output.Depth.rrrr;
-                
+                output.Depth = fragDepth;
 
+                output.Color = output.Depth.rrrr;
+                if(output.Depth > 1){
+                    output.Color = float4(1,0,1,1);
+                }
+                //output.Color = position;
+                //output.Depth = LinearDepthToRawDepth(fragDepth);
+                
+                
                 return output;
             }
             ENDCG
