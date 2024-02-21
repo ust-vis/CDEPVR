@@ -75,18 +75,21 @@ Shader "Unlit/colorAndDepthWrite"
                 float objectDistance = tex2D(_Depth, i.uv).r;
                 float4 position = i.position;
                 float4 fragPos = objectDistance * position;
-                float4 fragClipPosition = UnityObjectToClipPos(fragPos);
-                float fragDepth = (fragClipPosition.z / fragClipPosition.w);
+                //float4 fragClipPosition = UnityObjectToClipPos(fragPos);
+                float3 cameraSpacePosition = UnityObjectToViewPos(fragPos);
+                //float fragDepth = (fragClipPosition.z / fragClipPosition.w);
+            
                 
                 //fragDepth = (fragDepth - _ProjectionParams.y) / (_ProjectionParams.z - _ProjectionParams.y);
 
-                //output.Color = tex2D(_MainTex, i.uv);
+                output.Color = tex2D(_MainTex, i.uv);
+                //output.Depth = objectDistance;
+                output.Depth = LinearDepthToRawDepth(-cameraSpacePosition.z);
                 //output.Depth = fragDepth;
-                output.Depth = fragDepth;
 
-                output.Color = output.Depth.rrrr;
+                //output.Color = output.Depth.rrrr;
                 if(output.Depth > 1){
-                    output.Color = float4(1,0,1,1);
+                //    output.Color = float4(1,0,1,1);
                 }
                 //output.Color = position;
                 //output.Depth = LinearDepthToRawDepth(fragDepth);
