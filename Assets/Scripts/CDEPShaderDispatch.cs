@@ -28,6 +28,7 @@ public class CDEPShaderDispatch : MonoBehaviour
     private ComputeBuffer intermediateStorage;
     private int x, y;
     private List<Capture> captures;
+    private float ipd;
 
     public bool drivePosFromHead;
     public Transform head;
@@ -79,8 +80,6 @@ public class CDEPShaderDispatch : MonoBehaviour
         textureGenShader.SetInts("dims", x, y);
         textureGenShader.SetFloat("z_max", 1);
 
-        cdepShader.SetFloat("camera_ipd", 0.0608f);
-        Debug.Log(Camera.main.stereoSeparation);
         cdepShader.SetFloat("camera_focal_dist", 1f);
         cdepShader.SetFloat("z_max", 10f);
         cdepShader.SetFloat("depth_hint", 1f);
@@ -105,10 +104,19 @@ public class CDEPShaderDispatch : MonoBehaviour
 
         //Render the buffer to the render texture    
         textureGenShader.Dispatch(textureGenKernelID, x / threadGroupSize, y / threadGroupSize, 1);
+
+        ipd = Camera.main.stereoSeparation;
     }
 
+    
     public void Update()
     {
+        if(MathF.Abs(ipd - Camera.main.stereoSeparation) > 0.0001)
+        {
+            ipd = Camera.main.stereoSeparation;
+            cdepShader.SetFloat("camera_ipd", Camera.main.stereoSeparation * 2);
+            Debug.Log("IPD changed: " + Camera.main.stereoSeparation);
+        }
         clearShader.Dispatch(clearShaderKernelID, x / threadGroupSize, y / threadGroupSize, 1);
         if (drivePosFromHead)
         {
