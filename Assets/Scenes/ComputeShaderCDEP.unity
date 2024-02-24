@@ -157,15 +157,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4361399214273151642, guid: 0d6ca1d4082d92140925713485862abf, type: 3}
       propertyPath: renderRight
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4361399214273151642, guid: 0d6ca1d4082d92140925713485862abf, type: 3}
       propertyPath: imagesToLoad
-      value: 1
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 4361399214273151642, guid: 0d6ca1d4082d92140925713485862abf, type: 3}
       propertyPath: imagesToRender
-      value: 1
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 4361399214273151642, guid: 0d6ca1d4082d92140925713485862abf, type: 3}
       propertyPath: textureObjects.Array.size

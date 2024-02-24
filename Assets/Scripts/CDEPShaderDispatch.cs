@@ -10,6 +10,7 @@ using Unity.VisualScripting;
 
 public class CDEPShaderDispatch : MonoBehaviour
 {
+    public float mergeDistance = 0.5f;
     public RenderTexture rtColor, rtDepth;
     public ComputeShader clearShader;
     private int clearShaderKernelID;
@@ -92,7 +93,7 @@ public class CDEPShaderDispatch : MonoBehaviour
 
         //cdepResources.PrintJson(Application.streamingAssetsPath + "/" + depthName, positions, imagesToLoad);
         //captures = cdepResources.InitializeOdsTextures(Application.streamingAssetsPath + "/" + depthName, positions, imagesToLoad).ToList();
-        captures = cdepResources.InitializeOdsTextures(Application.streamingAssetsPath + "/room capture").ToList();
+        captures = cdepResources.InitializeOdsTextures(Application.streamingAssetsPath + "/room capture", imagesToLoad).ToList();
 
         if (captures.Count > 0)
         {
@@ -146,7 +147,27 @@ public class CDEPShaderDispatch : MonoBehaviour
             cdepShader.SetVector("xr_view_dir", cdepCameraDirection);
             cdepShader.SetTexture(cdepKernelID, "image", captures[i].image);
             cdepShader.SetTexture(cdepKernelID, "depths", captures[i].depth);
-            cdepShader.SetFloat("depth_hint", -0.015f * i);
+            cdepShader.SetFloat("depth_hint", 0);
+            cdepShader.SetFloat("mergeDistance", mergeDistance);
+            if (i == 0)
+            {
+                float dist1 = Vector3.Distance(cdepCameraPosition, captures[i].position);
+                float dist2 = Vector3.Distance(cdepCameraPosition, captures[i + 1].position);
+                float dist = dist1 / (dist1 + dist2);
+                cdepShader.SetFloat("percentDistance", dist);
+            }
+            if (i == 1)
+            {
+                float dist1 = Vector3.Distance(cdepCameraPosition, captures[i].position);
+                float dist2 = Vector3.Distance(cdepCameraPosition, captures[i-1].position);
+                float dist = dist1 / (dist1 + dist2);
+                cdepShader.SetFloat("percentDistance", dist);
+            }
+            else
+            {
+                cdepShader.SetFloat("percentDistance", 0);
+            }
+            
 
             // Dispatch the shader
             cdepShader.Dispatch(cdepKernelID, x / threadGroupSize, y / threadGroupSize, 1);
