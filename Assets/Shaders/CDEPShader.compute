@@ -161,7 +161,7 @@ void CDEP(uint3 global_id : SV_DispatchThreadID) {
                             if(abs(newPixel.w - existingPixel.w) < mergeDistance){
                                 float3 color = lerp(newPixel.rgb, existingPixel.rgb, percentDistance);
                                 rgbd_l = packRgb776d12(color, (newPixel.w + existingPixel.w) / 2);
-                                out_rgbd[pix_idx_l] = rgbd_l;
+                                InterlockedMin(out_rgbd[pix_idx_l], rgbd_l);
                             }else{
                                 InterlockedMin(out_rgbd[pix_idx_l], rgbd_l);
                             }
