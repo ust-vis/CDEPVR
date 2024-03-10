@@ -147,7 +147,7 @@ void CDEP(uint3 global_id : SV_DispatchThreadID) {
                 }
             }
         }
-
+        /*
         if (visible_r && renderRightEye) {
             // pixel position
             uint out_x_r = uint(round(float(xres) * ((2.0 * M_PI) - out_azimuth_r) / (2.0 * M_PI)));
@@ -178,5 +178,6 @@ void CDEP(uint3 global_id : SV_DispatchThreadID) {
                 }
             }
         }
+        */
     }
 }

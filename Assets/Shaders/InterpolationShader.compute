@@ -1,0 +1,47 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel INTERPOLATE
+
+uint xres;
+uint yres;
+//0 the interpolation will use prev image for conflicting pixels. 1 will use this texture for conflicting
+//0.5 will mix conflicting
+float percentDistance;
+//Points less than this distance apart will be intpolated
+float mergeDistance;
+RWStructuredBuffer<uint> pass1;
+RWStructuredBuffer<uint> pass2;
+
+uint packRgb776d12(float3 rgb, float depth) {
+    uint r7 = uint(rgb.r * 127.0);
+    uint g7 = uint(rgb.g * 127.0);
+    uint b6 = uint(rgb.b * 63.0);
+    uint d12 = uint(depth * 4095.0);
+    return ((d12 & 0xFFF) << 20) | ((b6 & 0x3F) << 14) | ((g7 & 0x7F) << 7) | (r7 & 0x7F);
+}
+
+float4 unpackRgb776d12(uint packed) {
+    float r7 = float(packed & 0x7F) / 127.0;
+    float g7 = float((packed >> 7) & 0x7F) / 127.0;
+    float b6 = float((packed >> 14) & 0x3F) / 63.0;
+    float d12 = float((packed >> 20) & 0xFFF) / 4095.0;
+    return float4(r7, g7, b6, d12);
+}
+
+[numthreads(8,8,1)]
+void INTERPOLATE (uint3 id : SV_DispatchThreadID)
+{
+    if (id.x < xres && id.y < yres) {
+        uint idx = uint(id.x) * xres  + uint(id.y);
+        //try to check the diff of unpacked prior to unpacking to potentially save on perf
+        float4 existingPixel = unpackRgb776d12(pass1[idx]);
+        float4 newPixel = unpackRgb776d12(pass2[idx]);
+        if(abs(newPixel.w - existingPixel.w) < mergeDistance){
+            float3 color = lerp(newPixel.rgb, existingPixel.rgb, percentDistance);
+            uint interpolatedVal = packRgb776d12(color, (newPixel.w + existingPixel.w) / 2);
+            InterlockedMin(pass1[idx], interpolatedVal);
+        }else{
+            //draw whichever has less depth
+            InterlockedMin(pass1[idx], pass2[idx]);
+        }
+    }
+}

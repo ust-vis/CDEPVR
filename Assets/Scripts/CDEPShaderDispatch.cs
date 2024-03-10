@@ -9,49 +9,68 @@ using System.Collections;
 using Unity.VisualScripting;
 
 public class CDEPShaderDispatch : MonoBehaviour
-{
+{   
     public RenderTexture rtColor, rtDepth;
+    [Header("Compute Shaders")]
+    //the second buffers are used for interpolation
     public ComputeShader clearShader;
     private int clearShaderKernelID;
     public ComputeShader cdepShader;
     private int cdepKernelID;
     public ComputeShader textureGenShader;
     private int textureGenKernelID;
+    public ComputeShader interpolationShader;
+    private int interpolationKernelID;
     public int threadGroupSize = 8;
     public int imagesToLoad = 8;
     public int imagesToRender = 8;
-    public String depthName;
-    public Vector3[] positions;
-    public Vector3 camPos;
     public Vector2 resolution;
 
     private ComputeBuffer intermediateStorage;
+    //This is used on the second pass for interpolating with the first pass
+    private ComputeBuffer intermediateStorage2;
     private int x, y;
     private List<Capture> captures;
     private float ipd;
 
+    [Header("Positioning")]
     public bool drivePosFromHead;
+    public Vector3 camPos;
     public Transform head;
 
     public bool renderLeft;
     public bool renderRight;
     public bool cullingEnabled;
+    [Header("Interpolation")]
+    public bool InterpolationEnabled;
+    public float mergeDistance = 0.05f;
 
+    
     public GameObject[] textureObjects;
     public GameObject[] depthObjects;
 
-    void Start()
+    private void OnEnable()
     {
         x = (int)resolution.x;
         y = (int)resolution.y * 2;
         rtColor = new RenderTexture(x, y, 24);
+        rtDepth = new RenderTexture(x, y, 24);
         intermediateStorage = new ComputeBuffer(x * y, sizeof(uint));
+        intermediateStorage2 = new ComputeBuffer(x * y, sizeof(uint));
+
+        // Find the kernel IDs
+        clearShaderKernelID = clearShader.FindKernel("CLEAR");
+        cdepKernelID = cdepShader.FindKernel("CDEP");
+        textureGenKernelID = textureGenShader.FindKernel("RENDERTEXTURE");
+        interpolationKernelID = interpolationShader.FindKernel("INTERPOLATE");
+    }
+
+    void Start()
+    {
         rtColor.graphicsFormat = UnityEngine.Experimental.Rendering.GraphicsFormat.R8G8B8A8_UNorm;
         rtColor.enableRandomWrite = true;
         rtColor.Create();
 
-        rtDepth = new RenderTexture(x, y, 24);
-        intermediateStorage = new ComputeBuffer(x * y, sizeof(uint));
         rtDepth.format = RenderTextureFormat.RFloat;
         rtDepth.enableRandomWrite = true;
         rtDepth.Create();
@@ -65,16 +84,10 @@ public class CDEPShaderDispatch : MonoBehaviour
             go.GetComponent<Renderer>().material.SetTexture("_Depth", rtDepth);
         }
 
-        // Find the kernel IDs
-        clearShaderKernelID = clearShader.FindKernel("CLEAR");
-        cdepKernelID = cdepShader.FindKernel("CDEP");
-        textureGenKernelID = textureGenShader.FindKernel("RENDERTEXTURE");
-
-
         clearShader.SetBuffer(clearShaderKernelID, "out_rgbd", intermediateStorage);
         clearShader.SetInts("dims", x, y);
 
-        textureGenShader.SetBuffer(textureGenKernelID, "_Rgbd", intermediateStorage);
+        textureGenShader.SetBuffer(textureGenKernelID, "_Rgbd", intermediateStorage2);
         textureGenShader.SetTexture(textureGenKernelID, "_OutRgba", rtColor);
         textureGenShader.SetTexture(textureGenKernelID, "_OutDepth", rtDepth);
         textureGenShader.SetInts("dims", x, y);
@@ -88,16 +101,20 @@ public class CDEPShaderDispatch : MonoBehaviour
         cdepShader.SetBool("renderRightEye", renderRight);
         cdepShader.SetFloat("xr_aspect", Camera.main.aspect);
         cdepShader.SetFloat("xr_fovy", Camera.main.fieldOfView * 0.89f);
+
+        interpolationShader.SetBuffer(interpolationKernelID, "pass1", intermediateStorage);
+        interpolationShader.SetBuffer(interpolationKernelID, "pass2", intermediateStorage2);
+
         //cdepShader.SetFloat("xr_fovy", 2 * Mathf.Atan(Mathf.Tan(Camera.main.fieldOfView / 2) * Camera.main.aspect));
 
-        //cdepResources.PrintJson(Application.streamingAssetsPath + "/" + depthName, positions, imagesToLoad);
-        //captures = cdepResources.InitializeOdsTextures(Application.streamingAssetsPath + "/" + depthName, positions, imagesToLoad).ToList();
-        captures = cdepResources.InitializeOdsTextures(Application.streamingAssetsPath + "/room capture").ToList();
+        captures = cdepResources.InitializeOdsTextures(Application.streamingAssetsPath + "/room capture", imagesToLoad).ToList();
 
         if (captures.Count > 0)
         {
             cdepShader.SetInt("xres", (int)captures[0].image.width);
             cdepShader.SetInt("yres", (int)captures[0].image.height);
+            interpolationShader.SetInt("xres", (int)captures[0].image.width);
+            interpolationShader.SetInt("yres", (int)captures[0].image.height);
         }
 
         cdepShader.SetBuffer(cdepKernelID, "out_rgbd", intermediateStorage);
@@ -111,13 +128,19 @@ public class CDEPShaderDispatch : MonoBehaviour
     
     public void Update()
     {
-        if(MathF.Abs(ipd - Camera.main.stereoSeparation) > 0.0001)
+        if (MathF.Abs(ipd - Camera.main.stereoSeparation) > 0.0001)
         {
             ipd = Camera.main.stereoSeparation;
             cdepShader.SetFloat("camera_ipd", Camera.main.stereoSeparation * 2);
             Debug.Log("IPD changed: " + Camera.main.stereoSeparation);
         }
+
+        clearShader.SetBuffer(clearShaderKernelID, "out_rgbd", intermediateStorage);
         clearShader.Dispatch(clearShaderKernelID, x / threadGroupSize, y / threadGroupSize, 1);
+        
+        clearShader.SetBuffer(clearShaderKernelID, "out_rgbd", intermediateStorage2);
+        clearShader.Dispatch(clearShaderKernelID, x / threadGroupSize, y / threadGroupSize, 1);
+
         if (drivePosFromHead)
         {
             camPos = head.position;
@@ -142,18 +165,39 @@ public class CDEPShaderDispatch : MonoBehaviour
 
         for (int i = 0; i < Math.Min(imagesToRender, captures.Count); i++)
         {
-            cdepShader.SetVector("camera_position", cdepCameraPosition - captures[i].position);
-            cdepShader.SetVector("xr_view_dir", cdepCameraDirection);
-            cdepShader.SetTexture(cdepKernelID, "image", captures[i].image);
-            cdepShader.SetTexture(cdepKernelID, "depths", captures[i].depth);
-            cdepShader.SetFloat("depth_hint", -0.015f * i);
+            //we want to render this to the secondary buffer then merge the primary and secondary buffers 
+            //back into the primary buffer.
+            if (InterpolationEnabled && i == 1)
+            {
+                cdepShader.SetBuffer(cdepKernelID, "out_rgbd", intermediateStorage2);
+                cdepShader.SetVector("camera_position", cdepCameraPosition - captures[i].position);
+                cdepShader.SetVector("xr_view_dir", cdepCameraDirection);
+                cdepShader.SetTexture(cdepKernelID, "image", captures[i].image);
+                cdepShader.SetTexture(cdepKernelID, "depths", captures[i].depth);
+                cdepShader.SetFloat("depth_hint", 0);
+                //cdepShader.Dispatch(cdepKernelID, x / threadGroupSize, y / threadGroupSize, 1);
 
-            // Dispatch the shader
-            cdepShader.Dispatch(cdepKernelID, x / threadGroupSize, y / threadGroupSize, 1);
+                float dist1 = Vector3.Distance(cdepCameraPosition, captures[i-1].position);
+                float dist2 = Vector3.Distance(cdepCameraPosition, captures[i].position);
+                float dist = dist1 / (dist1 + dist2);
 
-            //Render the buffer to the render texture
-            textureGenShader.Dispatch(textureGenKernelID, x / threadGroupSize, y / threadGroupSize, 1);
+                interpolationShader.SetFloat("percentDistance", dist);
+                interpolationShader.SetFloat("mergeDistance", mergeDistance);
+                interpolationShader.Dispatch(interpolationKernelID, x / threadGroupSize, y / threadGroupSize, 1);
+            }
+            else
+            {
+                cdepShader.SetBuffer(cdepKernelID, "out_rgbd", intermediateStorage);
+                cdepShader.SetVector("camera_position", cdepCameraPosition - captures[i].position);
+                cdepShader.SetVector("xr_view_dir", cdepCameraDirection);
+                cdepShader.SetTexture(cdepKernelID, "image", captures[i].image);
+                cdepShader.SetTexture(cdepKernelID, "depths", captures[i].depth);
+                cdepShader.SetFloat("depth_hint", -0.015f * i);
+                cdepShader.Dispatch(cdepKernelID, x / threadGroupSize, y / threadGroupSize, 1);
+            }
         }
+        //Render the buffer to the render texture
+        textureGenShader.Dispatch(textureGenKernelID, x / threadGroupSize, y / threadGroupSize, 1);
     }
 
     void OnDestroy()

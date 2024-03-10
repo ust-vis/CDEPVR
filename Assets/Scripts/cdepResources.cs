@@ -63,7 +63,7 @@ namespace cdep
             return caps;
         }
 
-        public static Capture[] InitializeOdsTextures(string folderPath)
+        public static Capture[] InitializeOdsTextures(string folderPath, int imagesToLoad = -1)
         {
             CaptureData[] data;
             try
@@ -74,9 +74,17 @@ namespace cdep
                 Debug.LogError(e.Message);
                 return new Capture[0];
             }
-
-            Capture[] caps = new Capture[data.Length];
-            for (int i = 0; i < data.Length; i++)
+            int len;
+            if(imagesToLoad == -1)
+            {
+                len = data.Length;
+            }
+            else
+            {
+                len = Math.Min(data.Length, imagesToLoad);
+            }
+            Capture[] caps = new Capture[len];
+            for (int i = 0; i < caps.Length; i++)
             {
                 caps[i] = new Capture();
                 Texture2D color = new Texture2D(1, 1); //mock size 1x1
