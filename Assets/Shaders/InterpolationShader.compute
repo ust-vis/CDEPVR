@@ -38,10 +38,10 @@ void INTERPOLATE (uint3 id : SV_DispatchThreadID)
         if(abs(newPixel.w - existingPixel.w) < mergeDistance){
             float3 color = lerp(newPixel.rgb, existingPixel.rgb, percentDistance);
             uint interpolatedVal = packRgb776d12(color, (newPixel.w + existingPixel.w) / 2);
-            InterlockedMin(pass1[idx], interpolatedVal);
+            pass1[idx] = min(pass1[idx], interpolatedVal);
         }else{
             //draw whichever has less depth
-            InterlockedMin(pass1[idx], pass2[idx]);
+            pass1[idx] = min(pass1[idx], pass2[idx]);
         }
     }
 }

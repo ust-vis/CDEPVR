@@ -43,6 +43,7 @@ public class CDEPShaderDispatch : MonoBehaviour
     public bool cullingEnabled;
     [Header("Interpolation")]
     public bool InterpolationEnabled;
+    public int InterpolationSteps = 2;
     public float mergeDistance = 0.05f;
 
     
@@ -87,7 +88,7 @@ public class CDEPShaderDispatch : MonoBehaviour
         clearShader.SetBuffer(clearShaderKernelID, "out_rgbd", intermediateStorage);
         clearShader.SetInts("dims", x, y);
 
-        textureGenShader.SetBuffer(textureGenKernelID, "_Rgbd", intermediateStorage2);
+        textureGenShader.SetBuffer(textureGenKernelID, "_Rgbd", intermediateStorage);
         textureGenShader.SetTexture(textureGenKernelID, "_OutRgba", rtColor);
         textureGenShader.SetTexture(textureGenKernelID, "_OutDepth", rtDepth);
         textureGenShader.SetInts("dims", x, y);
@@ -114,7 +115,7 @@ public class CDEPShaderDispatch : MonoBehaviour
             cdepShader.SetInt("xres", (int)captures[0].image.width);
             cdepShader.SetInt("yres", (int)captures[0].image.height);
             interpolationShader.SetInt("xres", (int)captures[0].image.width);
-            interpolationShader.SetInt("yres", (int)captures[0].image.height);
+            interpolationShader.SetInt("yres", (int)captures[0].image.height * 2);
         }
 
         cdepShader.SetBuffer(cdepKernelID, "out_rgbd", intermediateStorage);
@@ -167,7 +168,7 @@ public class CDEPShaderDispatch : MonoBehaviour
         {
             //we want to render this to the secondary buffer then merge the primary and secondary buffers 
             //back into the primary buffer.
-            if (InterpolationEnabled && i == 1)
+            if (InterpolationEnabled && i > 0 && i <= InterpolationSteps)
             {
                 cdepShader.SetBuffer(cdepKernelID, "out_rgbd", intermediateStorage2);
                 cdepShader.SetVector("camera_position", cdepCameraPosition - captures[i].position);
@@ -175,9 +176,9 @@ public class CDEPShaderDispatch : MonoBehaviour
                 cdepShader.SetTexture(cdepKernelID, "image", captures[i].image);
                 cdepShader.SetTexture(cdepKernelID, "depths", captures[i].depth);
                 cdepShader.SetFloat("depth_hint", 0);
-                //cdepShader.Dispatch(cdepKernelID, x / threadGroupSize, y / threadGroupSize, 1);
+                cdepShader.Dispatch(cdepKernelID, x / threadGroupSize, y / threadGroupSize, 1);
 
-                float dist1 = Vector3.Distance(cdepCameraPosition, captures[i-1].position);
+                float dist1 = Vector3.Distance(cdepCameraPosition, captures[0].position);
                 float dist2 = Vector3.Distance(cdepCameraPosition, captures[i].position);
                 float dist = dist1 / (dist1 + dist2);
 
@@ -192,7 +193,7 @@ public class CDEPShaderDispatch : MonoBehaviour
                 cdepShader.SetVector("xr_view_dir", cdepCameraDirection);
                 cdepShader.SetTexture(cdepKernelID, "image", captures[i].image);
                 cdepShader.SetTexture(cdepKernelID, "depths", captures[i].depth);
-                cdepShader.SetFloat("depth_hint", -0.015f * i);
+                cdepShader.SetFloat("depth_hint", 0.015f * i);
                 cdepShader.Dispatch(cdepKernelID, x / threadGroupSize, y / threadGroupSize, 1);
             }
         }
@@ -204,5 +205,6 @@ public class CDEPShaderDispatch : MonoBehaviour
     {
         // Release the compute buffer
         intermediateStorage.Release();
+        intermediateStorage2.Release();
     }
 }
