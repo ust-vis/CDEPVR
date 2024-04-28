@@ -7,19 +7,21 @@ This is mostly unused test scene that just loads CDEP data in as a raw point clo
 ### BasicSceneCDEP
 This scene implements CDEP within the traditional vertex-fragment shader pipeline. It generates two projections of the points into 3D space and uses an orthographic cameras rendering to render textures that are then mapped to spheres that track separate cameras for each eye. Render layers are used to ensure each eye only renders what it is supposed to render. In order to size points in this implementation the HLSL PSIZE semantic was used. This semantic is identical to the gl_pointsize in openGL implementations. This semantic does not work correctly when using the Direct-X unity backend. Instead openGL or Vulkan are required to enable this scene to work correctly. 
 
+The main script for this implementation us the MeshManager class. There are two instances of this class for both the left and right eyes found at "CDEP ROOT L/CDEP/MeshManagerCDEP" and "CDEP ROOT R/CDEP/MeshManagerCDEP". The script instantiates a game object for each capture each containing a MeshGeneration script. The template for these meshes is found at "CDEP ROOT R/CDEP/MESHCDep" 
+
 This scene has experimental depth support for mixed reality experiences. However, currently the depth is passed linearly causing very severe stair stepping artifacts.
 
-Its also work noting that the code for this implementation is very experimental and messy. Most of this code was re-written for the computer shader implementation in a much cleaner manner. 
+Its also work noting that the code for this and the pointcloud implementation is very experimental and messy. Most of this code was re-written for the computer shader implementation in a much cleaner manner. 
 ### ComputeShaderCDEP
 This is the main scene that most of the effort was put into. This is because of the immense performance uplift this implementation has over the traditional pipeline approach. This additional performance overhead allows for the addition of a rudimentary interpolation of captures. In this version a single compute shader outputs one texture. I believe the top half is the left eye and the right eye is the bottom half. Then, this texture is projected onto two spheres scaled vertically by a factor of 2 with different offsets for each eye. Again render layers are used for each eye and the spheres track the eye positions.
 
-The main script for this implementation is the CDEPShaderDispatch script. This is located on the CDEPCompute/CDEPComputeShader gameobject. Data is loaded in as a list of Capture objects via the Resources Class. 
+The main script for this implementation is the CDEPShaderDispatch script. This is located on the CDEPCompute/CDEPComputeShader game object. Data is loaded in as a list of Capture objects via the CDEPResources Class. 
 
 ## Development Environment Setup
 ### C#
 Just Visual Studio
 ### Vertex / Fragment Shaders
-Unity wraps shader code in custom syntax known as shader lab. This allows for bindings to the editor as well as metadata. Unfortunatly shaderlab doesn't have any great tooling support. The best I've found is [this VSCode extension](https://marketplace.visualstudio.com/items?itemName=amlovey.shaderlabvscodefree). There is a paid version available that adds live error detection and intellisense but I've made do with the free version. 
+Unity wraps shader code in custom syntax known as shader lab. This allows for bindings to the editor as well as metadata. Unfortunately shader lab doesn't have any great tooling support. The best I've found is [this VSCode extension](https://marketplace.visualstudio.com/items?itemName=amlovey.shaderlabvscodefree). There is a paid version available that adds live error detection and intellisense but I've made do with the free version. 
 ### Computer Shaders
 These are just standard HLSL files and I've had luck with this [HLSL tools extension](https://marketplace.visualstudio.com/items?itemName=TimGJones.hlsltools)
 
