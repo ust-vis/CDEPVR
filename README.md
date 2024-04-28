@@ -1,7 +1,7 @@
 # CDEP Unity Implementation
 this is a VR implementation of CDEP. The repo has been tested on an HTC Vive and should work well on other headset though is untested. If a headset is present then it should automatically connect to unity and start tracking on play. Additionally, the project makes use of the MockHMD XR Plugin allowing for development without a headset plugged in. Camera movement is done manually via the camera transform in the inspector in this state. 
 ## Project Structure 
-Currently data is loaded in at runtime from the special [streaming assets folder](https://docs.unity3d.com/Manual/StreamingAssets.html). The streaming assets folder should contain a captures.json file such as [this](https://github.com/ust-vis/CDEPVR/files/15140504/captures.json) that contains relative paths to color and depth files as well as positions. This data is not provided in the repo and will need to be added separately. There are 3 scenes scenes setup under Assets/Scenes
+Currently data is loaded in at runtime from the special [streaming assets folder](https://docs.unity3d.com/Manual/StreamingAssets.html). The streaming assets folder should contain a captures.json file such as [this](https://github.com/ust-vis/CDEPVR/files/15140504/captures.json) that contains relative paths to color and depth files as well as positions. Color Images have been tested to work with .png, depth is stored in .depth files which are just a series of floats. This data is not provided in the repo and will need to be added separately. There are 3 scenes scenes setup under Assets/Scenes
 ### PointCloudScene
 This is mostly unused test scene that just loads CDEP data in as a raw point cloud without any re-projection or point sizing.
 ### BasicSceneCDEP
