@@ -11,13 +11,14 @@ This scene has experimental depth support for mixed reality experiences. However
 
 Its also work noting that the code for this implementation is very experimental and messy. Most of this code was re-written for the computer shader implementation in a much cleaner manner. 
 ### ComputeShaderCDEP
-This is the main scene that most of the effort was put into. This is because of the immense performance uplift this implementation has over the traditional pipeline approach. This additional performance overhead allows for the addition of a rudimentary interpolation of captures. In this version a single compute shader outputs one texture. I believe the top half is the left eye and the right eye is the bottom half. Then, this texture is projected onto two spheres scaled vertically by a factor of 2 with different offsets for each eye. Again render layers are used for each eye and the spheres track the eye positions. 
+This is the main scene that most of the effort was put into. This is because of the immense performance uplift this implementation has over the traditional pipeline approach. This additional performance overhead allows for the addition of a rudimentary interpolation of captures. In this version a single compute shader outputs one texture. I believe the top half is the left eye and the right eye is the bottom half. Then, this texture is projected onto two spheres scaled vertically by a factor of 2 with different offsets for each eye. Again render layers are used for each eye and the spheres track the eye positions.
+
 The main script for this implementation is the CDEPShaderDispatch script. Data is loaded in as a list of Capture objects via the Resources Class. 
 
 ## Development Environment Setup
-# C#
+### C#
 Just Visual Studio
-# Vertex / Fragment Shaders
+### Vertex / Fragment Shaders
 Unity wraps shader code in custom syntax known as shader lab. This allows for bindings to the editor as well as metadata. Unfortunatly shaderlab doesn't have any great tooling support. The best I've found is [this VSCode extension](https://marketplace.visualstudio.com/items?itemName=amlovey.shaderlabvscodefree). There is a paid version available that adds live error detection and intellisense but I've made do with the free version. 
-# Computer Shaders
+### Computer Shaders
 These are just standard HLSL files and I've had luck with this [HLSL tools extension](https://marketplace.visualstudio.com/items?itemName=TimGJones.hlsltools)
