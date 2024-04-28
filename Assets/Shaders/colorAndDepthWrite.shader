@@ -37,11 +37,7 @@ Shader "Unlit/colorAndDepthWrite"
             struct v2f
             {
                 float2 uv : TEXCOORD0;
-<<<<<<< Updated upstream
                 float4 position: TEXCOORD1;
-=======
-                float3 position: POS;
->>>>>>> Stashed changes
                 float4 vertex : SV_POSITION;
             };
 
@@ -53,7 +49,7 @@ Shader "Unlit/colorAndDepthWrite"
             v2f vert (appdata v)
             {
                 v2f o;
-                o.position = v.vertex.xyz;
+                o.position = v.vertex;
                 o.vertex = UnityObjectToClipPos(v.vertex);
                 o.uv = TRANSFORM_TEX(v.uv, _MainTex);
                 o.uv.y *= _Scale;
@@ -77,31 +73,12 @@ Shader "Unlit/colorAndDepthWrite"
 
                 //convert distance to depth
                 float objectDistance = tex2D(_Depth, i.uv).r;
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
                 float4 position = i.position;
                 float4 fragPos = objectDistance * position;
                 //float4 fragClipPosition = UnityObjectToClipPos(fragPos);
                 float3 cameraSpacePosition = UnityObjectToViewPos(fragPos);
                 //float fragDepth = (fragClipPosition.z / fragClipPosition.w);
             
-=======
-=======
->>>>>>> Stashed changes
-                //float4 position = i.position;
-                //float4 fragPos = objectDistance * position;
-                //float4 fragClipPosition = UnityObjectToClipPos(fragPos);
-                //float fragDepth = fragClipPosition.z;
-                //fragDepth = (((far - near) * fragDepth) + far + near) * 0.5;
-
-                //output.Color = tex2D(_MainTex, i.uv);
-                //output.Depth = fragDepth;
-                //output.Depth = i.position;
-                output.Color = ;
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
                 
                 //fragDepth = (fragDepth - _ProjectionParams.y) / (_ProjectionParams.z - _ProjectionParams.y);
 

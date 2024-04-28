@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using static Unity.Burst.Intrinsics.X86.Avx;
 
 /*
  * Management class for compute shader implementation
@@ -161,9 +162,6 @@ public class CDEPShaderDispatch : MonoBehaviour
         //so unity cam correctly maps to new space
         Vector3 cdepCameraPosition = new Vector3(camPos.z, -camPos.y, camPos.x);
         captures = captures.OrderBy(x => Vector3.Distance(x.position, cdepCameraPosition)).ToList();
-        foreach (var cap in captures) { 
-            cap.position = new Vector3(cap.position.x, -cap.position.y, cap.position.z);
-        }
 
 
         float cameraPitch = Camera.main.transform.rotation.eulerAngles.x;
