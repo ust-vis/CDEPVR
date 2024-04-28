@@ -38,12 +38,13 @@ public class MeshManager : MonoBehaviour
         {
             Texture2D image = captures[i].image;
             Texture2D depth = captures[i].depth;
+            captures[i].position.y *= -1;
             Vector3 pos = captures[i].position;
 
             if (cdep)
             {
                 meshGenScript = Instantiate(meshTemplate, new Vector3(0, 0, 0), Quaternion.Euler(-180, 0, 0)).GetComponent<MeshGeneration>();
-                float[] position = { pos.x, pos.y, pos.z };
+                float[] position = { pos.x, pos.y, pos.z};
                 meshGenScript.pos = position;
             }
             else
