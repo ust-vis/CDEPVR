@@ -15,6 +15,8 @@ This is the main scene that most of the effort was put into. This is because of 
 
 The main script for this implementation is the CDEPShaderDispatch script. Data is loaded in as a list of Capture objects via the Resources Class. 
 
+### 
+
 ## Development Environment Setup
 ### C#
 Just Visual Studio
@@ -22,3 +24,6 @@ Just Visual Studio
 Unity wraps shader code in custom syntax known as shader lab. This allows for bindings to the editor as well as metadata. Unfortunatly shaderlab doesn't have any great tooling support. The best I've found is [this VSCode extension](https://marketplace.visualstudio.com/items?itemName=amlovey.shaderlabvscodefree). There is a paid version available that adds live error detection and intellisense but I've made do with the free version. 
 ### Computer Shaders
 These are just standard HLSL files and I've had luck with this [HLSL tools extension](https://marketplace.visualstudio.com/items?itemName=TimGJones.hlsltools)
+
+## Issues
+Known Issues are posted under the issues section of the repo
