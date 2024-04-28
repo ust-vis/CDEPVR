@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class CDEPMeshGeneration : MeshGeneration
@@ -9,7 +7,7 @@ public class CDEPMeshGeneration : MeshGeneration
     {
         base.Setup();
     }
-     
+
     public void SetCamPos(Vector3 cameraPos)
     {
         meshRenderer.material.SetVector("_camera_position", cameraPos);

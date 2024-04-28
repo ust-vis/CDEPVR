@@ -1,9 +1,5 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using UnityEngine;
+
 
 [RequireComponent(typeof(MeshFilter))]
 public class MeshGeneration : MonoBehaviour

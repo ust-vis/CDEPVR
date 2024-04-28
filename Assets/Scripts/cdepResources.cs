@@ -1,11 +1,7 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
-using UnityEngine;
 using Newtonsoft.Json;
-using JetBrains.Annotations;
+using System;
+using System.IO;
+using UnityEngine;
 
 namespace cdep
 {
@@ -41,6 +37,10 @@ namespace cdep
             return depthLoadTexture;
         }
 
+        /*
+         * This is a legacy Method that doesn't use the json format. Instead it assumes the naming convention of
+         * imgName_#.png or depthName_#.png
+         */
         public static Capture[] InitializeOdsTextures(string file_name, Vector3[] positions, int count)
         {
             Capture[] caps = new Capture[count];
@@ -63,6 +63,10 @@ namespace cdep
             return caps;
         }
 
+        /*
+         * This is the up to date method that parses the captures.json file, then parses the color, depth, and positions
+         * into a Capture array. 
+         */
         public static Capture[] InitializeOdsTextures(string folderPath, int imagesToLoad = -1)
         {
             CaptureData[] data;
@@ -70,12 +74,14 @@ namespace cdep
             {
                 string file = File.ReadAllText(folderPath + "/captures.json");
                 data = JsonConvert.DeserializeObject<CaptureData[]>(file);
-            }catch (FileNotFoundException e) { 
+            }
+            catch (FileNotFoundException e)
+            {
                 Debug.LogError(e.Message);
                 return new Capture[0];
             }
             int len;
-            if(imagesToLoad == -1)
+            if (imagesToLoad == -1)
             {
                 len = data.Length;
             }
@@ -104,6 +110,9 @@ namespace cdep
             return caps;
         }
 
+        /*
+         * A debug method used to validate deserialization
+         */
         public static void PrintJson(string file_name, Vector3[] positions, int count)
         {
             CaptureData[] datas = new CaptureData[count];
@@ -125,11 +134,17 @@ namespace cdep
             Debug.Log(debug);
         }
     }
+
+    /*
+     * Stores processed data 
+     */
     public class Capture
     {
         public Texture2D image;
         public Texture2D depth;
         public Vector3 position;
+        // The Mesh Generation script is only used with point cloud and 
+        // traditional pipeline implementations and is not used 
         public MeshGeneration meshGenScript;
     }
 
@@ -144,6 +159,6 @@ namespace cdep
     {
         public float x, y, z;
         public static implicit operator Vector3(SerializableVec3 vec) => new Vector3(vec.x, vec.y, vec.z);
-        public static implicit operator SerializableVec3(Vector3 vec) => new SerializableVec3() {x = vec.x, y = vec.y, z = vec.z};
+        public static implicit operator SerializableVec3(Vector3 vec) => new SerializableVec3() { x = vec.x, y = vec.y, z = vec.z };
     }
 }

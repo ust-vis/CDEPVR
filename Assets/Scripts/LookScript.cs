@@ -1,7 +1,4 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.EventSystems;
 
 public class LookScript : MonoBehaviour
 {
@@ -52,7 +49,7 @@ public class LookScript : MonoBehaviour
 
     void OnApplicationFocus(bool hasFocus)
     {
-        
+
         if (hasFocus)
         {
             focused = true;

@@ -1,8 +1,4 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.XR;
-using UnityEngine.XR.Management;
 
 public class XRDisplayScript : MonoBehaviour
 {
@@ -14,6 +10,6 @@ public class XRDisplayScript : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-            //XRSettings.gameViewRenderMode = GameViewRenderMode.BothEyes;
+        //XRSettings.gameViewRenderMode = GameViewRenderMode.BothEyes;
     }
 }

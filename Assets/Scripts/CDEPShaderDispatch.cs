@@ -1,15 +1,11 @@
-using System;
-using System.IO;
-using UnityEngine;
-using UnityEngine.UIElements;
 using cdep;
-using System.Linq;
+using System;
 using System.Collections.Generic;
-using System.Collections;
-using Unity.VisualScripting;
+using System.Linq;
+using UnityEngine;
 
 public class CDEPShaderDispatch : MonoBehaviour
-{   
+{
     public RenderTexture rtColor, rtDepth;
     [Header("Compute Shaders")]
     //the second buffers are used for interpolation
@@ -46,7 +42,7 @@ public class CDEPShaderDispatch : MonoBehaviour
     public int InterpolationSteps = 2;
     public float mergeDistance = 0.05f;
 
-    
+
     public GameObject[] textureObjects;
     public GameObject[] depthObjects;
 
@@ -126,7 +122,7 @@ public class CDEPShaderDispatch : MonoBehaviour
         ipd = Camera.main.stereoSeparation;
     }
 
-    
+
     public void Update()
     {
         if (MathF.Abs(ipd - Camera.main.stereoSeparation) > 0.0001)
@@ -138,7 +134,7 @@ public class CDEPShaderDispatch : MonoBehaviour
 
         clearShader.SetBuffer(clearShaderKernelID, "out_rgbd", intermediateStorage);
         clearShader.Dispatch(clearShaderKernelID, x / threadGroupSize, y / threadGroupSize, 1);
-        
+
         clearShader.SetBuffer(clearShaderKernelID, "out_rgbd", intermediateStorage2);
         clearShader.Dispatch(clearShaderKernelID, x / threadGroupSize, y / threadGroupSize, 1);
 

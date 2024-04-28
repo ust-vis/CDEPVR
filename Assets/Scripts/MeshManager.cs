@@ -1,10 +1,9 @@
+using cdep;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEngine;
-using cdep;
 
 public class MeshManager : MonoBehaviour
 {
@@ -37,14 +36,15 @@ public class MeshManager : MonoBehaviour
             InitializeOdsTextures(Application.streamingAssetsPath + "/" + depthName, i);
             Texture2D image = images[i];
             Texture2D depth = depths[i];
-            
+
             if (cdep)
             {
-                meshGenScript = Instantiate(meshTemplate, new Vector3(0,0,0), Quaternion.Euler(-180, 0, 0)).GetComponent<MeshGeneration>();
-                float[] position = { positions[i].x, positions[i].y, positions[i].z};
+                meshGenScript = Instantiate(meshTemplate, new Vector3(0, 0, 0), Quaternion.Euler(-180, 0, 0)).GetComponent<MeshGeneration>();
+                float[] position = { positions[i].x, positions[i].y, positions[i].z };
                 meshGenScript.pos = position;
             }
-            else {
+            else
+            {
                 float[] position = { positions[i].z, positions[i].y, -positions[i].x };
                 meshGenScript = Instantiate(
                     meshTemplate, new Vector3(position[0], position[1], position[2]), Quaternion.Euler(-90, 0, 0)
@@ -53,13 +53,14 @@ public class MeshManager : MonoBehaviour
             meshGenScript.depth = depth;
             meshGenScript.image = image;
             meshGenScript.Setup();
-            captures.Add(new Capture() {image = image, depth = depth, position = positions[i], meshGenScript = meshGenScript});
+            captures.Add(new Capture() { image = image, depth = depth, position = positions[i], meshGenScript = meshGenScript });
         }
     }
 
     public void Update()
     {
-        if (cdep) {
+        if (cdep)
+        {
             if (drivePosFromCam)
             {
                 cdepCameraPosition = new Vector3(Camera.main.transform.position.z, Camera.main.transform.position.y, Camera.main.transform.position.x);
@@ -83,7 +84,7 @@ public class MeshManager : MonoBehaviour
                 CDEPMeshGeneration meshGen = ((CDEPMeshGeneration)captures[i].meshGenScript);
                 if (i < maxMeshes)
                 {
-                    if(aspect != Camera.main.aspect)
+                    if (aspect != Camera.main.aspect)
                     {
                         meshGen.SetAspect(Camera.main.aspect);
                     }
@@ -104,7 +105,7 @@ public class MeshManager : MonoBehaviour
     void InitializeOdsTextures(string file_name, int index)
     {
         // Load from file path and save as texture - color
-        string textureImagePath = file_name + "_" + (index+1) + ".png";
+        string textureImagePath = file_name + "_" + (index + 1) + ".png";
         byte[] bytes = File.ReadAllBytes(textureImagePath);
         Texture2D loadTexture = new Texture2D(1, 1); //mock size 1x1
         loadTexture.LoadImage(bytes);
