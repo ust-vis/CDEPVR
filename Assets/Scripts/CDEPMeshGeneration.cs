@@ -1,5 +1,8 @@
 using UnityEngine;
 
+/*
+ * Adds bindings for modifying variables present in the CDEP shader
+ */
 public class CDEPMeshGeneration : MeshGeneration
 {
     // Start is called before the first frame update

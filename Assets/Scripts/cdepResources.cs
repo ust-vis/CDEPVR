@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace cdep
 {
-    public class cdepResources : MonoBehaviour
+    public class CdepResources : MonoBehaviour
     {
         private static Texture2D ParseDepth(byte[] rawFile, int width, int height)
         {
@@ -148,6 +148,9 @@ namespace cdep
         public MeshGeneration meshGenScript;
     }
 
+    /*
+     * DataStructure for Json Deserialization
+     */
     public class CaptureData
     {
         public SerializableVec3 position;

@@ -2,6 +2,9 @@ using UnityEngine;
 
 
 [RequireComponent(typeof(MeshFilter))]
+/*
+ * Generates a mesh with a vertex for each pixel of the provided image
+ */
 public class MeshGeneration : MonoBehaviour
 {
     public Texture2D image;

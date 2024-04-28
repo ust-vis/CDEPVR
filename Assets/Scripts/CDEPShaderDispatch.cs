@@ -4,26 +4,39 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
+/*
+ * Management class for compute shader implementation
+ */
 public class CDEPShaderDispatch : MonoBehaviour
 {
+    // Render textures store references to buffers on the GPU we can pass between shaders without moving from VRAM to RAM
+    // These textures are the final outputs of the CDEP shaders and are used for projection on the spheres
     public RenderTexture rtColor, rtDepth;
     [Header("Compute Shaders")]
-    //the second buffers are used for interpolation
+    // One buffer is continuously written in multiple passes for each capture.
+    // This Shader clears the buffer at the start of the frame
     public ComputeShader clearShader;
     private int clearShaderKernelID;
+    // The main CDEP shader that generates the visuals
     public ComputeShader cdepShader;
     private int cdepKernelID;
+    // This shader generates the render textures
     public ComputeShader textureGenShader;
     private int textureGenKernelID;
+    // Handles interpolation of closest shaders
     public ComputeShader interpolationShader;
     private int interpolationKernelID;
+
+    // Thread group size for dispatching. For complex reasons slightly beyond me this should probably be kept at 8
     public int threadGroupSize = 8;
     public int imagesToLoad = 8;
     public int imagesToRender = 8;
     public Vector2 resolution;
 
+    // This first intermetiate storage is the buffer that is cleared and rewritten to for each CDEP pass.
     private ComputeBuffer intermediateStorage;
-    //This is used on the second pass for interpolating with the first pass
+    // If interpolation is enabled data is written to the prior buffer on pass zero. Then subsequent passes
+    // Are written to this second buffer and merged back into the first buffer
     private ComputeBuffer intermediateStorage2;
     private int x, y;
     private List<Capture> captures;
@@ -40,6 +53,7 @@ public class CDEPShaderDispatch : MonoBehaviour
     [Header("Interpolation")]
     public bool InterpolationEnabled;
     public int InterpolationSteps = 2;
+    // The Epsilon for considering two points to have the same position
     public float mergeDistance = 0.05f;
 
 
@@ -81,6 +95,7 @@ public class CDEPShaderDispatch : MonoBehaviour
             go.GetComponent<Renderer>().material.SetTexture("_Depth", rtDepth);
         }
 
+        //pass all the necessary references to the shaders
         clearShader.SetBuffer(clearShaderKernelID, "out_rgbd", intermediateStorage);
         clearShader.SetInts("dims", x, y);
 
@@ -102,9 +117,7 @@ public class CDEPShaderDispatch : MonoBehaviour
         interpolationShader.SetBuffer(interpolationKernelID, "pass1", intermediateStorage);
         interpolationShader.SetBuffer(interpolationKernelID, "pass2", intermediateStorage2);
 
-        //cdepShader.SetFloat("xr_fovy", 2 * Mathf.Atan(Mathf.Tan(Camera.main.fieldOfView / 2) * Camera.main.aspect));
-
-        captures = cdepResources.InitializeOdsTextures(Application.streamingAssetsPath + "/room capture", imagesToLoad).ToList();
+        captures = CdepResources.InitializeOdsTextures(Application.streamingAssetsPath + "/room capture", imagesToLoad).ToList();
 
         if (captures.Count > 0)
         {
@@ -119,12 +132,14 @@ public class CDEPShaderDispatch : MonoBehaviour
         //Render the buffer to the render texture    
         textureGenShader.Dispatch(textureGenKernelID, x / threadGroupSize, y / threadGroupSize, 1);
 
+        // This sets the IPD to the actual ipd set by the user of the headeset
         ipd = Camera.main.stereoSeparation;
     }
 
 
     public void Update()
     {
+        //prevent sensor noise constantly chainging the ipd
         if (MathF.Abs(ipd - Camera.main.stereoSeparation) > 0.0001)
         {
             ipd = Camera.main.stereoSeparation;
@@ -132,6 +147,7 @@ public class CDEPShaderDispatch : MonoBehaviour
             Debug.Log("IPD changed: " + Camera.main.stereoSeparation);
         }
 
+        //clear both of the buffers for the frame
         clearShader.SetBuffer(clearShaderKernelID, "out_rgbd", intermediateStorage);
         clearShader.Dispatch(clearShaderKernelID, x / threadGroupSize, y / threadGroupSize, 1);
 
@@ -162,8 +178,8 @@ public class CDEPShaderDispatch : MonoBehaviour
 
         for (int i = 0; i < Math.Min(imagesToRender, captures.Count); i++)
         {
-            //we want to render this to the secondary buffer then merge the primary and secondary buffers 
-            //back into the primary buffer.
+            // we want to render this to the secondary buffer then merge the primary and secondary buffers 
+            // back into the primary buffer but only by the amount of interpolation steps as to not hurt performance too much
             if (InterpolationEnabled && i > 0 && i <= InterpolationSteps)
             {
                 cdepShader.SetBuffer(cdepKernelID, "out_rgbd", intermediateStorage2);
