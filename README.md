@@ -24,7 +24,8 @@ Unity wraps shader code in custom syntax known as shader lab. This allows for bi
 These are just standard HLSL files and I've had luck with this [HLSL tools extension](https://marketplace.visualstudio.com/items?itemName=TimGJones.hlsltools)
 
 ## Saving data from the application for a user study
-### Easiest way I've found to save data is [sheetdb.io](https://sheetdb.io/). You connect a google account to it and then can post new rows to a google sheet with a simple post request via UnityWebRequests. It does have free limitation of 500 requests a month but it should be possible to put all the data into one request per user. 
+### SheetDB
+Easiest way I've found to save data is [sheetdb.io](https://sheetdb.io/). You connect a google account to it and then can post new rows to a google sheet with a simple post request via UnityWebRequests. It does have free limitation of 500 requests a month but it should be possible to put all the data into one request per user. 
 
 ## Issues
 Known Issues are posted under the issues section of the repo
