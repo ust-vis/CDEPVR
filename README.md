@@ -13,7 +13,7 @@ Its also work noting that the code for this implementation is very experimental 
 ### ComputeShaderCDEP
 This is the main scene that most of the effort was put into. This is because of the immense performance uplift this implementation has over the traditional pipeline approach. This additional performance overhead allows for the addition of a rudimentary interpolation of captures. In this version a single compute shader outputs one texture. I believe the top half is the left eye and the right eye is the bottom half. Then, this texture is projected onto two spheres scaled vertically by a factor of 2 with different offsets for each eye. Again render layers are used for each eye and the spheres track the eye positions.
 
-The main script for this implementation is the CDEPShaderDispatch script. Data is loaded in as a list of Capture objects via the Resources Class. 
+The main script for this implementation is the CDEPShaderDispatch script. This is located on the CDEPCompute/CDEPComputeShader gameobject. Data is loaded in as a list of Capture objects via the Resources Class. 
 
 ### 
 
