@@ -58,7 +58,7 @@ namespace cdep
                 string depthImagePath = file_name + "_" + (i + 1) + ".depth";
                 byte[] depthBytes = File.ReadAllBytes(depthImagePath);
                 caps[i].depth = ParseDepth(depthBytes, color.width, color.height);
-                caps[i].position = new Vector3(positions[i].x, -positions[i].y, positions[i].z);
+                caps[i].position = new Vector3(positions[i].x, positions[i].y, positions[i].z);
             }
             return caps;
         }
